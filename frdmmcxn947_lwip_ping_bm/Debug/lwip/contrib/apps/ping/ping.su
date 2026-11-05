@@ -1,0 +1,9 @@
+../lwip/contrib/apps/ping/ping.c:111:1:ping_prepare_echo	24	static
+../lwip/contrib/apps/ping/ping.c:303:1:ping_recv	48	static
+../lwip/contrib/apps/ping/ping.c:335:1:ping_send	40	static
+../lwip/contrib/apps/ping/ping.c:364:1:ping_timeout	24	static
+../lwip/contrib/apps/ping/ping.c:376:1:ping_raw_init	8	static
+../lwip/contrib/apps/ping/ping.c:387:1:ping_send_now	8	static
+../lwip/contrib/apps/ping/ping.c:395:1:ping_raw_stop	8	static
+../lwip/contrib/apps/ping/ping.c:412:1:ping_init	16	static
+../lwip/contrib/apps/ping/ping.c:429:6:ping_stop	8	static

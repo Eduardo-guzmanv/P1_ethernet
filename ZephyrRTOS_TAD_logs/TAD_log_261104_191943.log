@@ -1,0 +1,14 @@
+"Task Aware Debugger for GDB" version 25.6.0 (202506250844)
+Copyright 2016-2025 NXP
+==================================
+19:13:02.976 INFO: [ZephyrRTOS] .config file could not be read [C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\Debug\.config (El sistema no puede encontrar el archivo especificado)]
+19:13:02.977 INFO: [TadModel] DSF session ID 2 has started.
+19:13:08.236 INFO: [ZephyrRTOS] .config file could not be read [invalid launch in DSF session]
+19:13:08.236 INFO: [TadModel] DSF session ID 3 has started.
+19:13:10.163 INFO: [TadState] TAD state changed: DEBUG_STARTED -> DEBUG_INIT_0 (SUSPENDED, USER_REQUEST)
+19:13:10.280 INFO: [TadState] TAD state changed: DEBUG_INIT_0 -> DEBUG_INIT_1 (SUSPENDED, USER_REQUEST)
+19:13:12.161 INFO: [TadState] TAD state changed: DEBUG_INIT_1 -> DEBUG_SUSPENDED (RESUMED, USER_REQUEST)
+19:13:12.200 INFO: [TadState] TAD state changed: DEBUG_SUSPENDED -> DEBUG_SUSPENDED (SUSPENDED, BREAKPOINT)
+19:14:16.73 INFO: [TadState] TAD state changed: DEBUG_SUSPENDED -> DEBUG_RESUMED (RESUMED, USER_REQUEST)
+19:19:42.941 INFO: [TadState] TAD state changed: DEBUG_RESUMED -> READY (SUSPENDED, SIGNAL)
+19:19:43.90 INFO: [TadModel] DSF session ID 2 has ended.

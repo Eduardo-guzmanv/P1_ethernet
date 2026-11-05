@@ -1,0 +1,7 @@
+C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_clock.h:1394:20:CLOCK_EnableClock	24	static
+../source/lwip_ping_bm.c:111:13:MDIO_Init	8	static
+../source/lwip_ping_bm.c:117:17:MDIO_Write	16	static
+../source/lwip_ping_bm.c:122:17:MDIO_Read	16	static
+../source/lwip_ping_bm.c:131:6:SysTick_Handler	8	static
+../source/lwip_ping_bm.c:140:6:udp_receive_callback	32	static
+../source/lwip_ping_bm.c:158:5:main	120	static
