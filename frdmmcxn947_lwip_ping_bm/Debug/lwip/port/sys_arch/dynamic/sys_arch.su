@@ -1,7 +1,7 @@
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:2587:22:__NVIC_SetPriority	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:3140:26:SysTick_Config	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:804:24:DisableGlobalIRQ	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:830:20:EnableGlobalIRQ	24	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:2587:22:__NVIC_SetPriority	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:3140:26:SysTick_Config	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:804:24:DisableGlobalIRQ	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:830:20:EnableGlobalIRQ	24	static
 ../lwip/port/sys_arch/dynamic/sys_arch.c:73:6:sys_assert	16	static
 ../lwip/port/sys_arch/dynamic/sys_arch.c:92:7:lwip_rand	4	static
 ../lwip/port/sys_arch/dynamic/sys_arch.c:710:6:time_isr	4	static

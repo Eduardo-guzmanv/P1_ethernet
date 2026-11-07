@@ -1,6 +1,6 @@
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\component\phy/fsl_phy.h:200:24:PHY_Init	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\component\phy/fsl_phy.h:292:24:PHY_GetLinkStatus	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\component\phy/fsl_phy.h:309:24:PHY_GetLinkSpeedDuplex	24	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\component\phy/fsl_phy.h:200:24:PHY_Init	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\component\phy/fsl_phy.h:292:24:PHY_GetLinkStatus	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\component\phy/fsl_phy.h:309:24:PHY_GetLinkSpeedDuplex	24	static
 ../lwip/port/ethernetif.c:181:6:ethernetif_phy_init	40	static
 ../lwip/port/ethernetif.c:201:13:fetch_received_pkts	24	static
 ../lwip/port/ethernetif.c:267:6:ethernetif_input	16	static

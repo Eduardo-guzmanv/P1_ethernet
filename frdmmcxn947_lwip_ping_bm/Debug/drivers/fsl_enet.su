@@ -1,5 +1,5 @@
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:2390:22:__NVIC_EnableIRQ	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:2428:22:__NVIC_DisableIRQ	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:2390:22:__NVIC_EnableIRQ	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\CMSIS/core_cm33.h:2428:22:__NVIC_DisableIRQ	16	static
 ../drivers/fsl_clock.h:1394:20:CLOCK_EnableClock	24	static
 ../drivers/fsl_clock.h:1420:20:CLOCK_DisableClock	24	static
 ../drivers/fsl_common_arm.h:586:24:EnableIRQ	24	static

@@ -1,5 +1,5 @@
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:804:24:DisableGlobalIRQ	16	static
-C:\Users\garci\OneDrive - ITESO\Documentos\ITESO\Redes\Practica1_Ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:830:20:EnableGlobalIRQ	24	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:804:24:DisableGlobalIRQ	16	static
+C:\Users\eduar\OneDrive\Documentos\ITESO\7mo_semestre\redes\P1_ethernet\frdmmcxn947_lwip_ping_bm\drivers/fsl_common_arm.h:830:20:EnableGlobalIRQ	24	static
 ../component/lists/fsl_component_generic_list.c:32:22:LIST_Error_Check	24	static
 ../component/lists/fsl_component_generic_list.c:80:6:LIST_Init	16	static
 ../component/lists/fsl_component_generic_list.c:103:15:LIST_GetList	16	static
