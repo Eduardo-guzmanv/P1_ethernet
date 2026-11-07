@@ -356,7 +356,6 @@ static void procesar_alerta(estacion_t *estacion, const paquete_sismo_t *paquete
     }
 }
 
-/* Revisa un paquete valido y actualiza los datos de la estacion que lo envio */
 static void procesar_paquete(const paquete_sismo_t *paquete, const ip_addr_t *ip, uint16_t puerto)
 {
     estacion_t *estacion;
@@ -370,8 +369,8 @@ static void procesar_paquete(const paquete_sismo_t *paquete, const ip_addr_t *ip
 
     estacion = &estaciones[paquete->id_estacion - 1U];
 
-    /* Se guarda de donde vino el mensaje para poder contestarle a la estacion */
-    ip_addr_copy(estacion->ip, *ip);
+    estacion->ip = *ip;
+
     estacion->puerto            = puerto;
     estacion->ultimo_mensaje_ms = sys_now();
     estacion->ya_se_conecto     = true;

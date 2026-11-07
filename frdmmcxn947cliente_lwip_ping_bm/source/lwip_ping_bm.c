@@ -1,48 +1,24 @@
-/*
- * Copyright (c) 2016, Freescale Semiconductor, Inc.
- * Copyright 2016-2020, 2022, 2024 NXP
- * All rights reserved.
- *
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
-/*******************************************************************************
- * Includes
- ******************************************************************************/
-
 #include "lwip/opt.h"
-
-#if LWIP_IPV4 && LWIP_RAW
-
 #include "lwip/sys.h"
 #include "lwip/udp.h"
 #include "lwip/timeouts.h"
 #include "lwip/init.h"
 #include "netif/ethernet.h"
 #include "ethernetif.h"
-
 #include "pin_mux.h"
 #include "board.h"
 #include "fsl_phy.h"
-
 #include "fsl_enet.h"
 #include "fsl_phylan8741.h"
 #include "fsl_port.h"
-/*******************************************************************************
- * Definitions
- ******************************************************************************/
+#include "fsl_lpflexcomm.h"
+#include "mpu6050.h"
+#include "sismo_detector.h"
 
-/* @TEST_ANCHOR */
-
-/*  1 = Norte, 2 = Centro */
-#define ID_ESTACION 1U
-
-/* Intensidad que envia el boton mientras no se conecta el acelerometro */
+#define ID_ESTACION 2U
 #define INTENSIDAD_BOTON 3U
 #define configMAC_ADDR {0x54, 0x27, 0x8D, 0x00, 0x00, (0x10 + ID_ESTACION)}
 
-/* IP address configuration. */
 #ifndef configIP_ADDR0
 #define configIP_ADDR0 192
 #endif
@@ -56,7 +32,6 @@
 #define configIP_ADDR3 (110 + ID_ESTACION)
 #endif
 
-/* Netmask configuration. */
 #ifndef configNET_MASK0
 #define configNET_MASK0 255
 #endif
@@ -70,7 +45,6 @@
 #define configNET_MASK3 0
 #endif
 
-/* Gateway address configuration. */
 #ifndef configGW_ADDR0
 #define configGW_ADDR0 192
 #endif
@@ -84,7 +58,6 @@
 #define configGW_ADDR3 100
 #endif
 
-/* Ethernet configuration. */
 extern phy_lan8741_resource_t g_phy_resource;
 #define EXAMPLE_ENET_BASE    ENET0
 #define EXAMPLE_PHY_ADDRESS  BOARD_ENET0_PHY_ADDRESS
@@ -92,17 +65,14 @@ extern phy_lan8741_resource_t g_phy_resource;
 #define EXAMPLE_PHY_RESOURCE &g_phy_resource
 #define EXAMPLE_CLOCK_FREQ   (50000000U)
 
-/* Must be after include of app.h */
 #ifndef configMAC_ADDR
 #include "fsl_silicon_id.h"
 #endif
 
 #ifndef EXAMPLE_NETIF_INIT_FN
-/*! @brief Network interface initialization function. */
 #define EXAMPLE_NETIF_INIT_FN ethernetif0_init
-#endif /* EXAMPLE_NETIF_INIT_FN */
+#endif
 
-/* Configuracion del cliente */
 #define PUERTO_UDP              5000U
 #define TIEMPO_REGISTRO_MS      1000U
 #define TIEMPO_LATIDO_MS        2000U
@@ -111,21 +81,22 @@ extern phy_lan8741_resource_t g_phy_resource;
 #define TIEMPO_LED_ENCENDIDO_MS 5000U
 #define MAXIMO_REINTENTOS       3U
 
-/* Valores que tiene el pin de SW2 */
 #define BOTON_PRESIONADO 0U
 #define BOTON_SUELTO     1U
 
-/* Tipos de mensaje del protocolo */
+#define MPU_I2C_BASE     LPI2C2
+#define MPU_I2C_INSTANCE 2U
+#define MPU_I2C_CLK_HZ   12000000U
+
 typedef enum
 {
-    MENSAJE_REGISTRO     = 1, /* Estacion servidor: la estacion acaba de encender */
-    MENSAJE_LATIDO       = 2, /* Estacion servidor: la estacion sigue conectada */
-    MENSAJE_ALERTA       = 3, /* Estacion servidor: se detecto una sacudida */
-    MENSAJE_CONFIRMACION = 4, /* Servidor estacion: mensaje recibido */
-    MENSAJE_AVISO        = 5  /* Servidor estaciones: aviso general de sismo */
+    MENSAJE_REGISTRO     = 1,
+    MENSAJE_LATIDO       = 2,
+    MENSAJE_ALERTA       = 3,
+    MENSAJE_CONFIRMACION = 4,
+    MENSAJE_AVISO        = 5
 } tipo_mensaje_t;
 
-/* Paquete que viaja por la red.*/
 typedef struct
 {
     uint8_t tipo;
@@ -135,7 +106,6 @@ typedef struct
     uint8_t es_simulacro;
 } paquete_sismo_t;
 
-/* Estados de la estacion */
 typedef enum
 {
     ESTACION_SIN_REGISTRO,
@@ -143,44 +113,30 @@ typedef enum
     ESTACION_ESPERANDO_CONFIRMACION
 } estado_estacion_t;
 
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
+void enviar_alerta(uint8_t intensidad);
 
-/*******************************************************************************
- * Variables
- ******************************************************************************/
 phy_lan8741_resource_t g_phy_resource;
 
 static phy_handle_t phyHandle;
-
-/* Socket UDP de la estacion y direccion del servidor */
 static struct udp_pcb *socket_cliente;
 static ip_addr_t ip_servidor;
 
-/* Estado de la estacion */
 static estado_estacion_t estado_estacion = ESTACION_SIN_REGISTRO;
-static uint16_t secuencia_actual         = 1U; /* El registro usa la secuencia 1 */
+static uint16_t secuencia_actual         = 1U;
 
-/* Alerta que espera confirmacion */
 static uint16_t secuencia_alerta  = 0U;
 static uint8_t intensidad_alerta  = 0U;
 static uint8_t reintentos_alerta  = 0U;
 
-/* Tiempos de la ultima vez que se hizo cada tarea */
 static uint32_t ultimo_registro_ms     = 0U;
 static uint32_t ultimo_latido_ms       = 0U;
 static uint32_t ultimo_envio_alerta_ms = 0U;
 static uint32_t ultima_lectura_boton_ms = 0U;
 static uint32_t led_encendido_ms       = 0U;
 
-/* Control del boton y del LED */
 static uint8_t estado_anterior_boton = BOTON_SUELTO;
 static bool led_encendido            = false;
 
-/*******************************************************************************
- * Code
- ******************************************************************************/
 static void MDIO_Init(void)
 {
     (void)CLOCK_EnableClock(s_enetClock[ENET_GetInstance(EXAMPLE_ENET_BASE)]);
@@ -197,16 +153,11 @@ static status_t MDIO_Read(uint8_t phyAddr, uint8_t regAddr, uint16_t *pData)
     return ENET_MDIORead(EXAMPLE_ENET_BASE, phyAddr, regAddr, pData);
 }
 
-
-/*!
- * @brief Interrupt service for SysTick timer.
- */
 void SysTick_Handler(void)
 {
     time_isr();
 }
 
-/* Envia un paquete al servidor. La secuencia se envia en orden de red. */
 static void enviar_paquete(uint8_t tipo, uint16_t secuencia, uint8_t intensidad)
 {
     paquete_sismo_t paquete = {0};
@@ -227,7 +178,6 @@ static void enviar_paquete(uint8_t tipo, uint16_t secuencia, uint8_t intensidad)
     pbuf_free(memoria);
 }
 
-/* Regresa un numero de secuencia nuevo. El 0 no se usa nunca. */
 static uint16_t obtener_nueva_secuencia(void)
 {
     secuencia_actual++;
@@ -240,18 +190,17 @@ static uint16_t obtener_nueva_secuencia(void)
     return secuencia_actual;
 }
 
-/* Envia una alerta nueva al servidor. Tambien la usara el acelerometro. */
-static void enviar_alerta(uint8_t intensidad)
+void enviar_alerta(uint8_t intensidad)
 {
     if (estado_estacion == ESTACION_SIN_REGISTRO)
     {
-        PRINTF("Alerta no enviada: la estacion aun no esta registrada\r\n");
+        PRINTF("Alerta no enviada\r\n");
         return;
     }
 
     if (estado_estacion == ESTACION_ESPERANDO_CONFIRMACION)
     {
-        PRINTF("Alerta no enviada: la anterior sigue sin confirmar\r\n");
+        PRINTF("Alerta no enviada\r\n");
         return;
     }
 
@@ -265,7 +214,6 @@ static void enviar_alerta(uint8_t intensidad)
     PRINTF("Alerta enviada: nivel %u, secuencia %u\r\n", intensidad_alerta, secuencia_alerta);
 }
 
-/* Revisa si la confirmacion recibida corresponde al mensaje que se espera */
 static void procesar_confirmacion(const paquete_sismo_t *paquete)
 {
     if ((estado_estacion == ESTACION_SIN_REGISTRO) && (paquete->secuencia == 1U))
@@ -279,13 +227,8 @@ static void procesar_confirmacion(const paquete_sismo_t *paquete)
         estado_estacion = ESTACION_REGISTRADA;
         PRINTF("Alerta confirmada por el servidor\r\n");
     }
-    else
-    {
-        /* Confirmacion repetida o atrasada*/
-    }
 }
 
-/* Apaga los tres colores del LED RGB */
 static void apagar_led(void)
 {
     GPIO_PinWrite(BOARD_LED_RED_GPIO, BOARD_LED_RED_GPIO_PIN, LOGIC_LED_OFF);
@@ -293,7 +236,6 @@ static void apagar_led(void)
     GPIO_PinWrite(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, LOGIC_LED_OFF);
 }
 
-/* Enciende el color del LED que corresponde a la intensidad */
 static void encender_led(uint8_t intensidad)
 {
     apagar_led();
@@ -312,7 +254,6 @@ static void encender_led(uint8_t intensidad)
     led_encendido_ms = sys_now();
 }
 
-/* Muestra el aviso general que envio el servidor */
 static void procesar_aviso(const paquete_sismo_t *paquete)
 {
     encender_led(paquete->intensidad);
@@ -327,7 +268,6 @@ static void procesar_aviso(const paquete_sismo_t *paquete)
     }
 }
 
-/* Funcion que lwIP llama cada vez que llega un paquete a la estacion */
 static void recibir_paquete(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
     paquete_sismo_t paquete;
@@ -355,16 +295,11 @@ static void recibir_paquete(void *arg, struct udp_pcb *pcb, struct pbuf *p, cons
         {
             procesar_aviso(&paquete);
         }
-        else
-        {
-            /* Los demas mensajes no son para la estacion */
-        }
     }
 
-    pbuf_free(p); /* Liberar memoria */
+    pbuf_free(p);
 }
 
-/* Mientras no haya confirmacion, intenta registrarse cada segundo */
 static void revisar_registro(void)
 {
     uint32_t ahora_ms = sys_now();
@@ -377,7 +312,6 @@ static void revisar_registro(void)
     }
 }
 
-/* Envia un latido cada 2 segundos cuando la estacion ya esta registrada */
 static void revisar_latido(void)
 {
     uint32_t ahora_ms = sys_now();
@@ -389,7 +323,6 @@ static void revisar_latido(void)
     }
 }
 
-/* Reenvia la alerta con la misma secuencia si no llega la confirmacion */
 static void revisar_reintento(void)
 {
     uint32_t ahora_ms = sys_now();
@@ -413,7 +346,6 @@ static void revisar_reintento(void)
     PRINTF("Reintento %u de la alerta\r\n", reintentos_alerta);
 }
 
-/* Lee SW2 cada 20 ms para ignorar los rebotes del boton */
 static void revisar_boton(void)
 {
     uint32_t ahora_ms = sys_now();
@@ -435,7 +367,6 @@ static void revisar_boton(void)
     estado_anterior_boton = estado_boton;
 }
 
-/* Apaga el LED cuando pasa el tiempo del aviso */
 static void revisar_led(void)
 {
     if (led_encendido && ((sys_now() - led_encendido_ms) >= TIEMPO_LED_ENCENDIDO_MS))
@@ -445,7 +376,6 @@ static void revisar_led(void)
     }
 }
 
-/* Configura el boton SW2 y el LED RGB */
 static void iniciar_boton_y_led(void)
 {
     port_pin_config_t configuracion_boton = {0};
@@ -461,7 +391,6 @@ static void iniciar_boton_y_led(void)
     RESET_ReleasePeripheralReset(kGPIO0_RST_SHIFT_RSTn);
     RESET_ReleasePeripheralReset(kGPIO1_RST_SHIFT_RSTn);
 
-    /* El boton usa resistencia pull-up: se lee 1 suelto y 0 presionado */
     configuracion_boton.pullSelect  = kPORT_PullUp;
     configuracion_boton.mux         = kPORT_MuxAlt0;
     configuracion_boton.inputBuffer = kPORT_InputBufferEnable;
@@ -478,7 +407,24 @@ static void iniciar_boton_y_led(void)
     GPIO_PinInit(BOARD_LED_BLUE_GPIO, BOARD_LED_BLUE_GPIO_PIN, &salida);
 }
 
-/* Crea el socket UDP y guarda la direccion del servidor */
+void iniciar_i2c_mpu(void)
+{
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom2Clk, 1U);
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM2);
+    LP_FLEXCOMM_Init(MPU_I2C_INSTANCE, LP_FLEXCOMM_PERIPH_LPI2C);
+}
+
+static void revisar_sismo(void)
+{
+    uint8_t nivel = 0U;
+
+    if (sismo_detector_tarea(sys_now(), &nivel))
+    {
+        PRINTF("Sacudida detectada: pico %u mg -> nivel %u\r\n", sismo_detector_ultimo_pico_mg(), nivel);
+        enviar_alerta(nivel);
+    }
+}
+
 static bool iniciar_cliente(void)
 {
     IP4_ADDR(&ip_servidor, 192, 168, 0, 102);
@@ -499,9 +445,6 @@ static bool iniciar_cliente(void)
     return true;
 }
 
-/*!
- * @brief Main function.
- */
 int main(void)
 {
     struct netif netif;
@@ -516,7 +459,6 @@ int main(void)
     };
 
     CLOCK_EnableClock(kCLOCK_InputMux);
-    /* attach 12 MHz clock to FLEXCOMM0 (debug console) */
     CLOCK_AttachClk(BOARD_DEBUG_UART_CLK_ATTACH);
 
     BOARD_InitBootPins();
@@ -535,17 +477,21 @@ int main(void)
 
     time_init();
 
-    /* Set MAC address. */
 #ifndef configMAC_ADDR
     (void)SILICONID_ConvertToMacAddr(&enet_config.macAddress);
 #endif
 
-    /* Get clock after hardware init. */
     enet_config.srcClockHz = EXAMPLE_CLOCK_FREQ;
 
     IP4_ADDR(&netif_ipaddr, configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3);
     IP4_ADDR(&netif_netmask, configNET_MASK0, configNET_MASK1, configNET_MASK2, configNET_MASK3);
     IP4_ADDR(&netif_gw, configGW_ADDR0, configGW_ADDR1, configGW_ADDR2, configGW_ADDR3);
+
+    iniciar_i2c_mpu();
+
+    if (!sismo_detector_init(MPU_I2C_BASE, MPU_I2C_CLK_HZ)){
+        PRINTF("Aviso: el MPU6050 no responde\r\n");
+    }
 
     lwip_init();
 
@@ -555,7 +501,7 @@ int main(void)
 
     while (ethernetif_wait_linkup(&netif, 5000) != ERR_OK)
     {
-        PRINTF("PHY Auto-negotiation failed. Please check the cable connection and link partner setting.\r\n");
+        PRINTF("PHY Auto-negotiation failed.\r\n");
     }
 
     iniciar_boton_y_led();
@@ -578,22 +524,21 @@ int main(void)
     PRINTF(" IPv4 Gateway     : %u.%u.%u.%u\r\n", ((u8_t *)&netif_gw)[0], ((u8_t *)&netif_gw)[1],
            ((u8_t *)&netif_gw)[2], ((u8_t *)&netif_gw)[3]);
     PRINTF("************************************************\r\n");
-    PRINTF(" Estacion %u lista. Presiona SW2 para enviar una alerta.\r\n", ID_ESTACION);
+    PRINTF(" Estacion %u lista\r\n", ID_ESTACION);
     PRINTF("************************************************\r\n");
 
     while (1)
     {
-        /* Poll the driver, get any outstanding frames */
         ethernetif_input(&netif);
 
-        sys_check_timeouts(); /* Handle all system timeouts for all core protocols */
+        sys_check_timeouts();
 
-        /* Tareas de la estacion */
         revisar_registro();
         revisar_latido();
         revisar_reintento();
         revisar_boton();
         revisar_led();
+
+        revisar_sismo();
     }
 }
-#endif

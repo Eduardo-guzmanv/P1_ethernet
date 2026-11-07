@@ -4,7 +4,7 @@
  * This file is based on \src\include\lwip\opt.h
  ******************************************************************************
  * Copyright (c) 2013-2016, Freescale Semiconductor, Inc.
- * Copyright 2016-2018, 2022-2023 NXP
+ * Copyright 2016-2018, 2022-2024 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -14,6 +14,14 @@
 #define __LWIPOPTS_H__
 
 #include "fsl_device_registers.h"
+
+#ifndef USE_RTOS
+#ifdef SDK_OS_FREE_RTOS
+#define USE_RTOS 1
+#else
+#define USE_RTOS 0
+#endif /* SDK_OS_FREE_RTOS */
+#endif /* USE_RTOS */
 
 #if USE_RTOS
 
@@ -28,6 +36,19 @@
  * NO_SYS==0: Use RTOS
  */
 #define NO_SYS 0
+
+/**
+ * LWIP_NETIF_API==1: Support netif api (in netifapi.c)
+ */
+#define LWIP_NETIF_API 1
+
+/**
+ * LWIP_NETIF_EXT_STATUS_CALLBACK==1: Support an extended callback function
+ * for several netif related event that supports multiple subscribers.
+ * @see netif_ext_status_callback
+ */
+#define LWIP_NETIF_EXT_STATUS_CALLBACK 1
+
 /**
  * LWIP_NETCONN==1: Enable Netconn API (require to use api_lib.c)
  */
@@ -59,7 +80,7 @@
 
 /**
  * LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT=1: we need to free PBUF_RAM pbufs
- * from ISR context on LPC.
+ * from ISR context on LPC/MCX.
  */
 #if ((defined(FSL_FEATURE_SOC_LPC_ENET_COUNT) && (FSL_FEATURE_SOC_LPC_ENET_COUNT > 0)) || \
      (defined(FSL_FEATURE_SOC_MCX_ENET_COUNT) && (FSL_FEATURE_SOC_MCX_ENET_COUNT > 0)))
@@ -71,6 +92,19 @@
 #endif
 
 /* ---------- Core locking ---------- */
+
+#if !NO_SYS
+#define LWIP_TCPIP_CORE_LOCKING 1
+
+void sys_lock_tcpip_core(void);
+#define LOCK_TCPIP_CORE() sys_lock_tcpip_core()
+
+void sys_unlock_tcpip_core(void);
+#define UNLOCK_TCPIP_CORE() sys_unlock_tcpip_core()
+
+void sys_mark_tcpip_thread(void);
+#define LWIP_MARK_TCPIP_THREAD() sys_mark_tcpip_thread()
+#endif
 
 void sys_check_core_locking(void);
 #define LWIP_ASSERT_CORE_LOCKED() sys_check_core_locking()
@@ -119,15 +153,15 @@ void sys_check_core_locking(void);
 #ifndef MEMP_NUM_TCP_SEG
 #define MEMP_NUM_TCP_SEG 22
 #endif
+/* MEMP_NUM_REASSDATA: the number of IP packets simultaneously queued for
+   reassembly (whole packets, not fragments!) */
+#ifndef MEMP_NUM_REASSDATA
+#define MEMP_NUM_REASSDATA 2
+#endif
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
    timeouts. */
 #ifndef MEMP_NUM_SYS_TIMEOUT
 #define MEMP_NUM_SYS_TIMEOUT 10
-#endif
-/* MEMP_NUM_REASS_DATA: The number of whole IP packets
-   queued for reassembly. */
-#ifndef MEMP_NUM_REASSDATA
-#define MEMP_NUM_REASSDATA 2
 #endif
 
 /* ---------- Pbuf options ---------- */
@@ -139,6 +173,20 @@ void sys_check_core_locking(void);
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
 /* Default value is defined in lwip\src\include\lwip\opt.h as
  * LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_ENCAPSULATION_HLEN+PBUF_LINK_HLEN)*/
+
+/* ---------- Network Interfaces options ---------- */
+/* LWIP_NUM_NETIF_CLIENT_DATA: Number of clients that may store
+ * data in client_data member array of struct netif (max. 256). */
+#ifndef LWIP_NUM_NETIF_CLIENT_DATA
+#define LWIP_NUM_NETIF_CLIENT_DATA 2
+#endif
+
+/* ---------- IP options ---------- */
+
+/* IP_REASS_MAX_PBUFS: Total maximum amount of pbufs waiting to be reassembled. */
+#ifndef IP_REASS_MAX_PBUFS
+#define IP_REASS_MAX_PBUFS 4
+#endif
 
 /* ---------- TCP options ---------- */
 #ifndef LWIP_TCP
@@ -186,13 +234,10 @@ void sys_check_core_locking(void);
 #define LWIP_ICMP 1
 #endif
 
-/* ---------- RAW options ---------- */
-#if !defined LWIP_RAW
-#define LWIP_RAW 1
-#endif
-
 /* ---------- DHCP options ---------- */
-/* Enable DHCP module. */
+/* Define LWIP_DHCP to 1 if you want DHCP configuration of
+   interfaces. DHCP is not implemented in lwIP 0.5.1, however, so
+   turning this on does currently not work. */
 #ifndef LWIP_DHCP
 #define LWIP_DHCP 1
 #endif
@@ -287,7 +332,12 @@ void sys_check_core_locking(void);
    ------------------------------------
 */
 
-#define LWIP_DEBUG
+/**
+ * LWIP_DEBUG: Uncomment the definition of this macro to allow
+ * lwIP to print debug messages.
+ */
+
+/* #define LWIP_DEBUG */
 
 #ifdef LWIP_DEBUG
 #define U8_F  "c"
@@ -339,31 +389,6 @@ void sys_check_core_locking(void);
 #include "lwip/arch.h"
 u32_t lwip_rand(void);
 #define LWIP_RAND() lwip_rand()
-#endif
-
-/**
- * IP_REASS_MAX_PBUFS: Number of buffers reserved for IP fragment reassembly.
- */
-#ifndef IP_REASS_MAX_PBUFS
-#define IP_REASS_MAX_PBUFS 4
-#endif
-
-/*
-   ------------------------------------------------
-   ---------- Network Interfaces options ----------
-   ------------------------------------------------
-*/
-/**
- * @defgroup lwip_opts_netif NETIF
- * @ingroup lwip_opts
- * @{
- */
-/**
- * LWIP_SINGLE_NETIF==1: use a single netif only. This is the common case for
- * small real-life targets. Some code like routing etc. can be left out.
- */
-#ifndef LWIP_SINGLE_NETIF
-#define LWIP_SINGLE_NETIF 1
 #endif
 
 #endif /* __LWIPOPTS_H__ */
