@@ -6,7 +6,7 @@
  * Generated linker script file for MCXN947
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.30
- * MCUXpresso IDE v25.6 [Build 136] [2025-06-27] on 4 nov. 2026 19:23:00
+ * MCUXpresso IDE v24.12 [Build 148] [2025-01-10] on 7 nov. 2026 16:28:58
  */
 
 INCLUDE "frdmmcxn947_lwip_ping_bm_Debug_library.ld"
